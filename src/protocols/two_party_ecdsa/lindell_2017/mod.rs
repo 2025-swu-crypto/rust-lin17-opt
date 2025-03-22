@@ -14,10 +14,13 @@
     @license GPL-3.0+ <https://github.com/KZen-networks/multi-party-ecdsa/blob/master/LICENSE>
 */
 
-const SECURITY_BITS: usize = 256;
+const SECURITY_BITS: usize = 128;
 
 pub mod party_one;
+pub mod party_one_jl;
 pub mod party_two;
+pub mod party_two_jl;
+pub mod paillier_test;
 
 #[cfg(test)]
 mod test;

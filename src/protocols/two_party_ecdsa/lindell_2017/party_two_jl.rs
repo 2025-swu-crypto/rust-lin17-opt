@@ -26,15 +26,15 @@ use curv::cryptographic_primitives::proofs::ProofError;
 use curv::elliptic::curves::{secp256_k1::Secp256k1, Point, Scalar};
 use curv::BigInt;
 use paillier::Paillier;
-use paillier::{Add, Encrypt, Mul};
-use paillier::{EncryptionKey, RawCiphertext, RawPlaintext};
+use rust_joyelibert::{Add, Encrypt, Mul};
+use rust_joyelibert::{JoyeLibert, EncryptionKey, RawCiphertext, RawPlaintext};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use zk_paillier::zkproofs::{IncorrectProof, NiCorrectKeyProof};
 
-use super::party_one::EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg;
-use super::party_one::KeyGenFirstMsg as Party1KeyGenFirstMessage;
-use super::party_one::KeyGenSecondMsg as Party1KeyGenSecondMessage;
+use super::party_one_jl::EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg;
+use super::party_one_jl::KeyGenFirstMsg as Party1KeyGenFirstMessage;
+use super::party_one_jl::KeyGenSecondMsg as Party1KeyGenSecondMessage;
 use super::SECURITY_BITS;
 use crate::utilities::mta::{MessageA, MessageB};
 
@@ -76,7 +76,7 @@ pub struct KeyGenFirstMsg {
 pub struct KeyGenSecondMsg {}
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PaillierPublic {
+pub struct JoyelibertPublic {
     pub ek: EncryptionKey,
     pub encrypted_secret_share: BigInt,
 }
@@ -84,6 +84,12 @@ pub struct PaillierPublic {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PartialSig {
     pub c3: BigInt,
+}
+
+// TODO: 이거 delta pub으로 줘도 되는가? 
+pub struct OptimizedPartialSig {
+    pub c3: BigInt,
+    delta: BigInt,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -265,71 +271,71 @@ impl Party2Private {
     }
 
     // used to transform lindell master key to gg18 master key
-    pub fn to_mta_message_b(
-        &self,
-        ek: &EncryptionKey,
-        ciphertext: &BigInt,
-    ) -> (MessageB, Scalar<Secp256k1>) {
-        let message_a = MessageA {
-            c: ciphertext.clone(),
-            range_proofs: vec![],
-        };
-        let (a, b, _, _) = MessageB::b(&self.x2, ek, message_a, &[]).unwrap();
-        (a, b)
-    }
+    // pub fn to_mta_message_b(
+    //     &self,
+    //     ek: &EncryptionKey,
+    //     ciphertext: &BigInt,
+    // ) -> (MessageB, Scalar<Secp256k1>) {
+    //     let message_a = MessageA {
+    //         c: ciphertext.clone(),
+    //         range_proofs: vec![],
+    //     };
+    //     let (a, b, _, _) = MessageB::b(&self.x2, ek, message_a, &[]).unwrap();
+    //     (a, b)
+    // }
 }
 
-impl PaillierPublic {
-    pub fn pdl_verify(
-        composite_dlog_proof: &CompositeDLogProof,
-        pdl_w_slack_statement: &PDLwSlackStatement,
-        pdl_w_slack_proof: &PDLwSlackProof,
-        paillier_public: &PaillierPublic,
-        q1: &Point<Secp256k1>,
-    ) -> Result<(), PartyTwoError> {
-        if pdl_w_slack_statement.ek != paillier_public.ek
-            || pdl_w_slack_statement.ciphertext != paillier_public.encrypted_secret_share
-            || &pdl_w_slack_statement.Q != q1
-        {
-            return Err(PartyTwoError::PdlVerify);
-        }
-        let dlog_statement = DLogStatement {
-            N: pdl_w_slack_statement.N_tilde.clone(),
-            g: pdl_w_slack_statement.h1.clone(),
-            ni: pdl_w_slack_statement.h2.clone(),
-        };
-        if composite_dlog_proof.verify(&dlog_statement).is_ok()
-            && pdl_w_slack_proof.verify(pdl_w_slack_statement).is_ok()
-        {
-            Ok(())
-        } else {
-            Err(PartyTwoError::PdlVerify)
-        }
-    }
+// impl JoyelibertPublic {
+//     // pub fn pdl_verify(
+//     //     composite_dlog_proof: &CompositeDLogProof,
+//     //     pdl_w_slack_statement: &PDLwSlackStatement,
+//     //     pdl_w_slack_proof: &PDLwSlackProof,
+//     //     Joyelibert_public: &JoyelibertPublic,
+//     //     q1: &Point<Secp256k1>,
+//     // ) -> Result<(), PartyTwoError> {
+//     //     if pdl_w_slack_statement.ek != Joyelibert_public.ek
+//     //         || pdl_w_slack_statement.ciphertext != Joyelibert_public.encrypted_secret_share
+//     //         || &pdl_w_slack_statement.Q != q1
+//     //     {
+//     //         return Err(PartyTwoError::PdlVerify);
+//     //     }
+//     //     let dlog_statement = DLogStatement {
+//     //         N: pdl_w_slack_statement.N_tilde.clone(),
+//     //         g: pdl_w_slack_statement.h1.clone(),
+//     //         ni: pdl_w_slack_statement.h2.clone(),
+//     //     };
+//     //     if composite_dlog_proof.verify(&dlog_statement).is_ok()
+//     //         && pdl_w_slack_proof.verify(pdl_w_slack_statement).is_ok()
+//     //     {
+//     //         Ok(())
+//     //     } else {
+//     //         Err(PartyTwoError::PdlVerify)
+//     //     }
+//     // }
 
-    pub fn verify_ni_proof_correct_key(
-        proof: NiCorrectKeyProof,
-        ek: &EncryptionKey,
-    ) -> Result<(), IncorrectProof> {
-        //
-        if ek.n.bit_length() < PAILLIER_KEY_SIZE - 1 {
-            return Err(IncorrectProof);
-        };
-        proof.verify(ek, zk_paillier::zkproofs::SALT_STRING)
-    }
-}
+//     pub fn verify_ni_proof_correct_key(
+//         proof: NiCorrectKeyProof,
+//         ek: &EncryptionKey,
+//     ) -> Result<(), IncorrectProof> {
+//         //
+//         if ek.n.bit_length() < PAILLIER_KEY_SIZE - 1 {
+//             return Err(IncorrectProof);
+//         };
+//         proof.verify(ek, zk_paillier::zkproofs::SALT_STRING)
+//     }
+// }
 
 impl EphKeyGenFirstMsg {
     pub fn create_commitments() -> (EphKeyGenFirstMsg, EphCommWitness, EphEcKeyPair) {
         let base = Point::generator();
 
-        let secret_share = Scalar::<Secp256k1>::random(); // k2
+        let secret_share = Scalar::<Secp256k1>::random();
 
-        let public_share = base * &secret_share; // R2
+        let public_share = base * &secret_share;
 
-        let h = Point::<Secp256k1>::base_point2(); //g2
+        let h = Point::<Secp256k1>::base_point2();
 
-        let c = h * &secret_share; // g2^k2
+        let c = h * &secret_share;
         let w = ECDDHWitness {
             x: secret_share.clone(),
         };
@@ -342,7 +348,6 @@ impl EphKeyGenFirstMsg {
         let d_log_proof = ECDDHProof::prove(&w, &delta);
 
         // we use hash based commitment
-        // H(R2)
         let pk_commitment_blind_factor = BigInt::sample(SECURITY_BITS);
         let pk_commitment =
             HashCommitment::<Sha256>::create_commitment_with_user_defined_randomness(
@@ -398,11 +403,11 @@ impl EphKeyGenSecondMsg {
 
 impl PartialSig {
     pub fn compute(
-        ek: &EncryptionKey, // paillier pk
-        encrypted_secret_share: &BigInt, // c_key
-        local_share: &Party2Private, // x2
-        ephemeral_local_share: &EphEcKeyPair, // k2
-        ephemeral_other_public_share: &Point<Secp256k1>, // R1=k1*g
+        ek: &EncryptionKey,
+        encrypted_secret_share: &BigInt,
+        local_share: &Party2Private,
+        ephemeral_local_share: &EphEcKeyPair,
+        ephemeral_other_public_share: &Point<Secp256k1>,
         message: &BigInt,
     ) -> PartialSig {
         let mut f = OpenOptions::new().append(true).open("exp_data").expect("cannot open file");
@@ -416,14 +421,13 @@ impl PartialSig {
         let k2_inv = BigInt::mod_inv(&ephemeral_local_share.secret_share.to_bigint(), q).unwrap();
         let partial_sig = rho * q + BigInt::mod_mul(&k2_inv, message, q);
 
-        // 3.2.4-(c) paillier enc 
         let start_time = Instant::now();
-        let c1 = Paillier::encrypt(ek, RawPlaintext::from(partial_sig));
+        let c1 = JoyeLibert::encrypt(ek, RawPlaintext::from(partial_sig));
         let end_time = Instant::now();
         let elapsed_time = end_time.duration_since(start_time);
         f.write_all(format!("paillier enc time: {:?}\n", elapsed_time.as_micros()).as_bytes()).expect("write failed");
 
-        // 3.2.4-(d)
+
         let v = BigInt::mod_mul(
             &k2_inv,
             &BigInt::mod_mul(&rx, &local_share.x2.to_bigint(), q),
@@ -431,8 +435,7 @@ impl PartialSig {
         );
 
         let start_time = Instant::now();
-        // paillier scalar mul 
-        let c2 = Paillier::mul(
+        let c2 = JoyeLibert::mul(
             ek,
             RawCiphertext::from(encrypted_secret_share.clone()),
             RawPlaintext::from(v),
@@ -442,15 +445,88 @@ impl PartialSig {
         f.write_all(format!("paillier mul time: {:?}\n", elapsed_time.as_micros()).as_bytes()).expect("write failed");
 
 
-        // paillier addition
+        //c3:
         let start_time = Instant::now();
-        let c3 = Paillier::add(ek, c2, c1).0.into_owned();
+        let c3 = JoyeLibert::add(ek, c2, c1).0.into_owned();
         let end_time = Instant::now();
         let elapsed_time = end_time.duration_since(start_time);
-        f.write_all(format!("paillier add time: {:?}\n", elapsed_time.as_micros()).as_bytes()).expect("write failed");
+        f.write_all(format!("paillier mul time: {:?}\n", elapsed_time.as_micros()).as_bytes()).expect("write failed");
 
         PartialSig {
             c3,
         }
+    }
+
+    pub fn optimized_offline(
+        ek: &EncryptionKey,
+        encrypted_secret_share: &BigInt,
+        local_share: &Party2Private,
+        ephemeral_local_share: &EphEcKeyPair,
+        ephemeral_other_public_share: &Point<Secp256k1>,
+    ) -> OptimizedPartialSig {
+        let mut f = OpenOptions::new().append(true).open("exp_data").expect("cannot open file");
+
+        let q = Scalar::<Secp256k1>::group_order();
+        //compute r = k2* R1
+        let r = ephemeral_other_public_share * &ephemeral_local_share.secret_share;
+        let rx = r.x_coord().unwrap().mod_floor(q);
+
+        let rho = BigInt::sample_below(&q.pow(2));
+        let delta = BigInt::sample_below(&q).pow(2);
+
+        
+        let start_time = Instant::now();
+        // c1 = enc(rho*q + delta)
+        // let c1 = JoyeLibert::encrypt(ek, RawPlaintext::from(rho.clone() * q + delta.clone()));
+        // notation 상 s21
+        let c1: RawCiphertext<'_> = JoyeLibert::encrypt(ek, RawPlaintext::from(rho.clone() * q + delta.clone()));
+        let end_time = Instant::now();
+        let elapsed_time = end_time.duration_since(start_time);
+        f.write_all(format!("paillier enc time: {:?}\n", elapsed_time.as_micros()).as_bytes()).expect("write failed");
+
+        let start_time = Instant::now();
+
+        // c2 = c_k^(k2_inv*r*x2 mod q)
+        // c_k = encrypted_secret_share
+        let rx2 = BigInt::mod_mul(&rx, &local_share.x2.to_bigint(), q);
+        let k2_inv = BigInt::mod_inv(&ephemeral_local_share.secret_share.to_bigint(), q).unwrap();
+        let c2_exp = BigInt::mod_mul(&k2_inv, &rx2, q);
+
+        let c2 = JoyeLibert::mul(
+            ek,
+            RawCiphertext::from(encrypted_secret_share.clone()),
+            RawPlaintext::from(c2_exp),
+        );
+        let end_time = Instant::now();
+        let elapsed_time = end_time.duration_since(start_time);
+        f.write_all(format!("JoyeLibert mul time: {:?}\n", elapsed_time.as_micros()).as_bytes()).expect("write failed");
+
+
+        //c3:
+        let start_time = Instant::now();
+        let c3 = JoyeLibert::add(ek, c2, c1).0.into_owned();
+        let end_time = Instant::now();
+        let elapsed_time = end_time.duration_since(start_time);
+        f.write_all(format!("JoyeLibert add time: {:?}\n", elapsed_time.as_micros()).as_bytes()).expect("write failed");
+
+        OptimizedPartialSig {
+            c3,
+            delta,
+        }
+    }
+
+    pub fn optimized_online(
+        ephemeral_local_share: &EphEcKeyPair,
+        opt_partial_sig: &OptimizedPartialSig,
+        message: &BigInt,
+    ) -> BigInt {
+
+        let q = Scalar::<Secp256k1>::group_order();
+        let k2_inv = BigInt::mod_inv(&ephemeral_local_share.secret_share.to_bigint(), q).unwrap();
+        let s22 = BigInt::mod_mul(&k2_inv, message, q) - &opt_partial_sig.delta + BigInt::pow(&q, 2);//q.pow(2);
+        // let s22 = BigInt::mod_mul(&k2_inv, message, q) - &opt_partial_sig.delta + q.clone(); //BigInt::pow(&q, 2);//q.pow(2);
+        println!("s22 bit: {:?}", s22.bit_length());
+        println!("q bit: {:?}", q.bit_length());
+        s22
     }
 }

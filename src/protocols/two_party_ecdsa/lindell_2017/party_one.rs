@@ -29,6 +29,8 @@ use curv::BigInt;
 use paillier::Paillier;
 use paillier::{Decrypt, EncryptWithChosenRandomness, KeyGeneration};
 use paillier::{DecryptionKey, EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
+
+
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use subtle::ConstantTimeEq;
@@ -44,7 +46,20 @@ use crate::Error;
 use crate::utilities::zk_pdl_with_slack::PDLwSlackProof;
 use crate::utilities::zk_pdl_with_slack::PDLwSlackStatement;
 use crate::utilities::zk_pdl_with_slack::PDLwSlackWitness;
+
+// use crate::utilities::joye_libert::joye_libert::*;
+
+
 use zk_paillier::zkproofs::{CompositeDLogProof, DLogStatement};
+
+use std::io::Write;
+use std::{marker::PhantomData, time::Instant};
+use std::fs::OpenOptions;
+use std::fs::File;
+
+
+
+
 
 //****************** Begin: Party One structs ******************//
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -79,6 +94,7 @@ pub struct PaillierKeyPair {
     pub encrypted_share: BigInt,
     randomness: BigInt,
 }
+
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SignatureRecid {
@@ -161,6 +177,8 @@ impl KeyGenFirstMsg {
             public_share,
             secret_share,
         };
+
+        // return 
         (
             KeyGenFirstMsg {
                 pk_commitment,
@@ -202,6 +220,8 @@ impl KeyGenFirstMsg {
             public_share,
             secret_share,
         };
+
+        // return 
         (
             KeyGenFirstMsg {
                 pk_commitment,
@@ -255,7 +275,7 @@ impl Party1Private {
         PDLwSlackProof,
         CompositeDLogProof,
     ) {
-        let (ek_new, dk_new) = Paillier::keypair().keys();
+        let (ek_new, dk_new) = Paillier::keypair_with_modulus_size(3072).keys();
         let randomness = Randomness::sample(&ek_new);
         let factor_fe = Scalar::<Secp256k1>::from(factor);
         let x1_new = &party_one_private.x1 * factor_fe;
@@ -315,9 +335,18 @@ impl Party1Private {
     }
 }
 
+
+
+
+
 impl PaillierKeyPair {
+    
     pub fn generate_keypair_and_encrypted_share(keygen: &EcKeyPair) -> PaillierKeyPair {
-        let (ek, dk) = Paillier::keypair().keys();
+        // let (ek, dk) = Paillier::keypair_precom().keys();
+        let (ek, dk) = Paillier::keypair_with_modulus_size(3072).keys();
+        // let (ek, dk) = Paillier::keypair_with_modulus_size(3072).keys();
+        
+        // BigInt::sample_below(&ek.n)
         let randomness = Randomness::sample(&ek);
 
         let encrypted_share = Paillier::encrypt_with_chosen_randomness(
@@ -403,11 +432,11 @@ impl PaillierKeyPair {
 impl EphKeyGenFirstMsg {
     pub fn create() -> (EphKeyGenFirstMsg, EphEcKeyPair) {
         let base = Point::generator();
-        let secret_share = Scalar::<Secp256k1>::random();
-        let public_share = &*base * &secret_share;
+        let secret_share = Scalar::<Secp256k1>::random(); // k1
+        let public_share = &*base * &secret_share; // R1
         let h = Point::<Secp256k1>::base_point2();
 
-        let c = h * &secret_share;
+        let c = h * &secret_share;  
         let w = ECDDHWitness {
             x: secret_share.clone(),
         };
@@ -422,6 +451,8 @@ impl EphKeyGenFirstMsg {
             public_share: public_share.clone(),
             secret_share,
         };
+
+        // return
         (
             EphKeyGenFirstMsg {
                 d_log_proof,
@@ -448,6 +479,7 @@ impl EphKeyGenSecondMsg {
             .pk_commitment_blind_factor;
         let party_two_d_log_proof = &party_two_second_message.comm_witness.d_log_proof;
         let mut flag = true;
+       
         if party_two_pk_commitment
             != &HashCommitment::<Sha256>::create_commitment_with_user_defined_randomness(
                 &BigInt::from_bytes(party_two_public_share.to_bytes(true).as_ref()),
@@ -484,10 +516,10 @@ impl EphKeyGenSecondMsg {
 
 impl Signature {
     pub fn compute(
-        party_one_private: &Party1Private,
-        partial_sig_c3: &BigInt,
-        ephemeral_local_share: &EphEcKeyPair,
-        ephemeral_other_public_share: &Point<Secp256k1>,
+        party_one_private: &Party1Private, // 
+        partial_sig_c3: &BigInt, // 3.2.4-(d)에서 p2's 2nd output 
+        ephemeral_local_share: &EphEcKeyPair, // k1
+        ephemeral_other_public_share: &Point<Secp256k1>, // R2
     ) -> Signature {
         //compute r = k2* R1
         let r = ephemeral_other_public_share * &ephemeral_local_share.secret_share;
@@ -499,11 +531,27 @@ impl Signature {
 
         let k1_inv = ephemeral_local_share.secret_share.invert().unwrap();
 
+        let mut f = OpenOptions::new().append(true).open("exp_data").expect("cannot open file");
+        let start_time = Instant::now();
+
         let s_tag = Paillier::decrypt(
             &party_one_private.paillier_priv,
             &RawCiphertext::from(partial_sig_c3),
         )
         .0;
+        let end_time = Instant::now();
+
+        
+        let p_size = party_one_private.paillier_priv.p.bit_length();
+        let q_size = party_one_private.paillier_priv.q.bit_length();
+        f.write_all(format!("p bit size: {:?}\n", p_size).as_bytes()).expect("write failed");
+        f.write_all(format!("q bit size: {:?}\n", q_size).as_bytes()).expect("write failed");
+
+        let elapsed_time = end_time.duration_since(start_time);
+    
+    
+        f.write_all(format!("paillier dec time: {:?}\n", elapsed_time.as_micros()).as_bytes()).expect("write failed");
+    
         let s_tag_fe = Scalar::<Secp256k1>::from(s_tag.as_ref());
         let s_tag_tag = s_tag_fe * k1_inv;
         let s_tag_tag_bn = s_tag_tag.to_bigint();
@@ -594,7 +642,7 @@ pub fn verify(
 pub fn generate_h1_h2_n_tilde() -> (BigInt, BigInt, BigInt, BigInt) {
     //note, should be safe primes:
     // let (ek_tilde, dk_tilde) = Paillier::keypair_safe_primes().keys();;
-    let (ek_tilde, dk_tilde) = Paillier::keypair().keys();
+    let (ek_tilde, dk_tilde) = Paillier::keypair_with_modulus_size(3072).keys();
     let one = BigInt::one();
     let phi = (&dk_tilde.p - &one) * (&dk_tilde.q - &one);
     let h1 = BigInt::sample_below(&phi);
