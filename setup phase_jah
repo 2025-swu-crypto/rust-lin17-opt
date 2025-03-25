@@ -1,0 +1,28 @@
+setup phase
+
+party2 
+- generate paillier_key_pair (pk = N, sk = Pi of N)
+- compute zkpok_Rp proof pi_p
+-> for correctness of Paillier_public_key
+- compute public parameter g and h for Pedersen_commitment mod N 
+& corresponding zero-knowledge proofs
+-> zkpok_QR proof pi_QR for h in QR
+-> zkpok_QRdl proof_pi_QRdl for g in <h>
+- sends public key, parameters and zkps to party1
+
+party1
+- generate paillier_key_pair (pk_0 = N_0, sk_0 = pi of N_0)
+public parameter g_0, h_0 for Pedersen_commitment 
+& corresponding zero-knowledge proofs pi_0_P, pi_0_QRdl
+
+multiplication phase
+
+a, b in Z_q
+-> a = input of party1
+-> b = input of party2
+
+party2
+- compute c_B = enc of (N, b)
+& zkpok_R_PwR proof pi_B on the ciphertext c_B and b in [0, q]
+- send (c_B, pi_B) to party1
+

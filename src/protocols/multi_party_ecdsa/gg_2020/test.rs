@@ -766,7 +766,7 @@ fn test_small_paillier() {
     // parties shouldn't be able to choose small Paillier modulus
     let mut k = Keys::create(0);
     // creating 2046-bit Paillier
-    let (ek, dk) = Paillier::keypair_with_modulus_size(2046).keys();
+    let (ek, dk) = Paillier::keypair_with_modulus_size(3072).keys();
     k.dk = dk;
     k.ek = ek;
     let (commit, decommit) = k.phase1_broadcast_phase3_proof_of_correct_key_proof_of_correct_h1h2();

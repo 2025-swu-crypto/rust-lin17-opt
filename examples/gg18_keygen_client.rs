@@ -267,5 +267,6 @@ pub fn signup(client: &Client) -> Result<PartySignup, ()> {
     let key = "signup-keygen".to_string();
 
     let res_body = postb(client, "signupkeygen", key).unwrap();
+    println!("{:?}", res_body);
     serde_json::from_str(&res_body).unwrap()
 }

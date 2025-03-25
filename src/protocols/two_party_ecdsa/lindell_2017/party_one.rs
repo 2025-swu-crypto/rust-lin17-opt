@@ -138,11 +138,11 @@ impl KeyGenFirstMsg {
     pub fn create_commitments() -> (KeyGenFirstMsg, CommWitness, EcKeyPair) {
         let base = Point::generator();
 
-        let secret_share = Scalar::<Secp256k1>::random();
+        let secret_share = Scalar::<Secp256k1>::random(); //x1
 
-        let public_share = base * &secret_share;
+        let public_share = base * &secret_share; //Q1 = x1 * P
 
-        let d_log_proof = DLogProof::<Secp256k1, Sha256>::prove(&secret_share);
+        let d_log_proof = DLogProof::<Secp256k1, Sha256>::prove(&secret_share); //nizk1
         // we use hash based commitment
         let pk_commitment_blind_factor = BigInt::sample(SECURITY_BITS);
         let pk_commitment =
