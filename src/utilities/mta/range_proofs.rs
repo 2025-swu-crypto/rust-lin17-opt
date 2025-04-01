@@ -171,8 +171,8 @@ impl AliceProof {
             Scalar::<Secp256k1>::group_order(),
         );
 
-        let Gen = alice_ek.n.borrow() + 1;
-        let e = Sha256::new()
+        let Gen: BigInt = alice_ek.n.borrow() + 1;
+        let e: BigInt = Sha256::new()
             .chain_bigint(&alice_ek.n)
             .chain_bigint(&Gen)
             .chain_bigint(cipher)
@@ -535,7 +535,7 @@ impl BobProofExt {
 }
 
 /// sample random value of an element of a multiplicative group
-pub trait SampleFromMultiplicativeGroup {
+pub trait SampleFromMultiplicativeGroup { // N* 추출
     fn from_modulo(N: &BigInt) -> BigInt;
     fn from_paillier_key(ek: &EncryptionKey) -> BigInt;
 }

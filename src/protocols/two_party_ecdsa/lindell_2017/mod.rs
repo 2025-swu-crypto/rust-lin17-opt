@@ -18,6 +18,13 @@ const SECURITY_BITS: usize = 256;
 
 pub mod party_one;
 pub mod party_two;
+pub mod range_proofs; // jah
+// pub mod zkp_qr; // jah
+// pub mod zkp_qrdl; // jah
+// pub mod zkp_rpwr; // jah
 
 #[cfg(test)]
 mod test;
+pub mod zkp_qr; // jah
+pub mod zkp_qrdl; // jah
+pub mod zkp_rpwr; // jah
