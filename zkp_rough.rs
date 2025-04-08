@@ -111,147 +111,147 @@
 // }
 
 
-// ver.2 === ZKPoK Full Suite: C.3.1 ~ C.3.4 Implementation ===
+// // ver.2 === ZKPoK Full Suite: C.3.1 ~ C.3.4 Implementation ===
 
-use num_bigint::BigInt;
-use sha2::{Sha256, Digest};
-use paillier::*;
+// use num_bigint::BigInt;
+// use sha2::{Sha256, Digest};
+// use paillier::*;
 
-// C.3.1 ZKPoK of QR
-#[derive(Clone)]
-pub struct ZkProofQR {
-    pub n0: BigInt,
-    pub x: BigInt,
-    pub r: BigInt,
-}
+// // C.3.1 ZKPoK of QR
+// #[derive(Clone)]
+// pub struct ZkProofQR {
+//     pub n0: BigInt,
+//     pub x: BigInt,
+//     pub r: BigInt,
+// }
 
-impl ZkProofQR {
-    pub fn compute_h(&self) -> BigInt {
-        BigInt::mod_pow(&self.x, &BigInt::from(2), &self.n0)
-    }
+// impl ZkProofQR {
+//     pub fn compute_h(&self) -> BigInt {
+//         BigInt::mod_pow(&self.x, &BigInt::from(2), &self.n0)
+//     }
 
-    pub fn generate_commitment(&self) -> (BigInt, BigInt) {
-        let a = BigInt::mod_pow(&self.r, &BigInt::from(2), &self.n0);
-        (self.r.clone(), a)
-    }
+//     pub fn generate_commitment(&self) -> (BigInt, BigInt) {
+//         let a = BigInt::mod_pow(&self.r, &BigInt::from(2), &self.n0);
+//         (self.r.clone(), a)
+//     }
 
-    pub fn generate_challenge(&self, a: &BigInt, h: &BigInt) -> BigInt {
-        let mut hasher = Sha256::new();
-        hasher.update(a.to_string().as_bytes());
-        hasher.update(h.to_string().as_bytes());
-        let hash = hasher.finalize();
-        BigInt::from(hash[hash.len() - 1] & 1)
-    }
+//     pub fn generate_challenge(&self, a: &BigInt, h: &BigInt) -> BigInt {
+//         let mut hasher = Sha256::new();
+//         hasher.update(a.to_string().as_bytes());
+//         hasher.update(h.to_string().as_bytes());
+//         let hash = hasher.finalize();
+//         BigInt::from(hash[hash.len() - 1] & 1)
+//     }
 
-    pub fn generate_response(&self, e: &BigInt) -> BigInt {
-        let xe = BigInt::mod_pow(&self.x, e, &self.n0);
-        BigInt::mod_mul(&xe, &self.r, &self.n0)
-    }
-}
+//     pub fn generate_response(&self, e: &BigInt) -> BigInt {
+//         let xe = BigInt::mod_pow(&self.x, e, &self.n0);
+//         BigInt::mod_mul(&xe, &self.r, &self.n0)
+//     }
+// }
 
-// C.3.2 ZKPoK of QRDL
-#[derive(Clone)]
-pub struct ZkProofQRDL {
-    pub g: BigInt,
-    pub h: BigInt,
-    pub alpha: BigInt,
-    pub n0: BigInt,
-}
+// // C.3.2 ZKPoK of QRDL
+// #[derive(Clone)]
+// pub struct ZkProofQRDL {
+//     pub g: BigInt,
+//     pub h: BigInt,
+//     pub alpha: BigInt,
+//     pub n0: BigInt,
+// }
 
-impl ZkProofQRDL {
-    pub fn generate_commitment(&self) -> (BigInt, BigInt) {
-        let beta = BigInt::sample_below(&self.n0);
-        let a = BigInt::mod_pow(&self.h, &beta, &self.n0);
-        (beta, a)
-    }
+// impl ZkProofQRDL {
+//     pub fn generate_commitment(&self) -> (BigInt, BigInt) {
+//         let beta = BigInt::sample_below(&self.n0);
+//         let a = BigInt::mod_pow(&self.h, &beta, &self.n0);
+//         (beta, a)
+//     }
 
-    pub fn generate_challenge(&self, a: &BigInt) -> BigInt {
-        let mut hasher = Sha256::new();
-        hasher.update(a.to_string().as_bytes());
-        hasher.update(self.g.to_string().as_bytes());
-        let hash = hasher.finalize();
-        BigInt::from(hash[hash.len() - 1] & 1)
-    }
+//     pub fn generate_challenge(&self, a: &BigInt) -> BigInt {
+//         let mut hasher = Sha256::new();
+//         hasher.update(a.to_string().as_bytes());
+//         hasher.update(self.g.to_string().as_bytes());
+//         let hash = hasher.finalize();
+//         BigInt::from(hash[hash.len() - 1] & 1)
+//     }
 
-    pub fn generate_response(&self, e: &BigInt, beta: &BigInt) -> BigInt {
-        e * &self.alpha + beta
-    }
-}
+//     pub fn generate_response(&self, e: &BigInt, beta: &BigInt) -> BigInt {
+//         e * &self.alpha + beta
+//     }
+// }
 
-// C.3.3 ZKPoKRPwR
-#[derive(Clone)]
-pub struct ZkProofRPwR {
-    pub proof: ZkProofQR,
-    pub proof_dl: ZkProofQRDL,
-    pub y: BigInt,
-    pub rd: BigInt,
-    pub beta: BigInt,
-    pub n: BigInt,
-    pub n_square: BigInt,
-}
+// // C.3.3 ZKPoKRPwR
+// #[derive(Clone)]
+// pub struct ZkProofRPwR {
+//     pub proof: ZkProofQR,
+//     pub proof_dl: ZkProofQRDL,
+//     pub y: BigInt,
+//     pub rd: BigInt,
+//     pub beta: BigInt,
+//     pub n: BigInt,
+//     pub n_square: BigInt,
+// }
 
-impl ZkProofRPwR {
-    pub fn commit(&self) -> (BigInt, BigInt, BigInt) {
-        let capital_c = BigInt::mod_mul(
-            &BigInt::mod_pow(&self.proof_dl.g, &self.proof.x, &self.proof.n0),
-            &BigInt::mod_pow(&self.proof.h, &self.proof_dl.alpha, &self.proof.n0),
-            &self.proof.n0,
-        );
+// impl ZkProofRPwR {
+//     pub fn commit(&self) -> (BigInt, BigInt, BigInt) {
+//         let capital_c = BigInt::mod_mul(
+//             &BigInt::mod_pow(&self.proof_dl.g, &self.proof.x, &self.proof.n0),
+//             &BigInt::mod_pow(&self.proof.h, &self.proof_dl.alpha, &self.proof.n0),
+//             &self.proof.n0,
+//         );
 
-        let d = BigInt::mod_mul(
-            &BigInt::mod_pow(&self.rd, &self.n, &self.n_square),
-            &BigInt::mod_pow(&(BigInt::from(1) + &self.n), &self.y, &self.n_square),
-            &self.n_square,
-        );
+//         let d = BigInt::mod_mul(
+//             &BigInt::mod_pow(&self.rd, &self.n, &self.n_square),
+//             &BigInt::mod_pow(&(BigInt::from(1) + &self.n), &self.y, &self.n_square),
+//             &self.n_square,
+//         );
 
-        let capital_d = BigInt::mod_mul(
-            &BigInt::mod_pow(&self.proof_dl.g, &self.y, &self.proof.n0),
-            &BigInt::mod_pow(&self.proof.h, &self.beta, &self.proof.n0),
-            &self.proof.n0,
-        );
+//         let capital_d = BigInt::mod_mul(
+//             &BigInt::mod_pow(&self.proof_dl.g, &self.y, &self.proof.n0),
+//             &BigInt::mod_pow(&self.proof.h, &self.beta, &self.proof.n0),
+//             &self.proof.n0,
+//         );
 
-        (capital_c, d, capital_d)
-    }
+//         (capital_c, d, capital_d)
+//     }
 
-    pub fn challenge(&self, c: &BigInt, d: &BigInt, cd: &BigInt, t: u32) -> BigInt {
-        let mut hasher = Sha256::new();
-        hasher.update(c.to_string().as_bytes());
-        hasher.update(d.to_string().as_bytes());
-        hasher.update(cd.to_string().as_bytes());
-        let hash = hasher.finalize();
-        BigInt::from_bytes(&hash) % BigInt::from(2).pow(t)
-    }
+//     pub fn challenge(&self, c: &BigInt, d: &BigInt, cd: &BigInt, t: u32) -> BigInt {
+//         let mut hasher = Sha256::new();
+//         hasher.update(c.to_string().as_bytes());
+//         hasher.update(d.to_string().as_bytes());
+//         hasher.update(cd.to_string().as_bytes());
+//         let hash = hasher.finalize();
+//         BigInt::from_bytes(&hash) % BigInt::from(2).pow(t)
+//     }
 
-    pub fn response(&self, e: &BigInt) -> (BigInt, BigInt, BigInt) {
-        let z1 = &self.y + &(e * &self.proof.x);
-        let z2 = BigInt::mod_mul(&self.rd, &BigInt::mod_pow(&self.proof.r, e, &self.n_square), &self.n_square);
-        let z3 = &self.beta + &(e * &self.proof_dl.alpha);
-        (z1, z2, z3)
-    }
-}
+//     pub fn response(&self, e: &BigInt) -> (BigInt, BigInt, BigInt) {
+//         let z1 = &self.y + &(e * &self.proof.x);
+//         let z2 = BigInt::mod_mul(&self.rd, &BigInt::mod_pow(&self.proof.r, e, &self.n_square), &self.n_square);
+//         let z3 = &self.beta + &(e * &self.proof_dl.alpha);
+//         (z1, z2, z3)
+//     }
+// }
 
-// C.3.4 ZKPoKRP
-#[derive(Clone)]
-pub struct ZkProofRP {
-    pub chunks: Vec<ZkProofRPwR>,
-    pub e: BigInt,
-}
+// // C.3.4 ZKPoKRP
+// #[derive(Clone)]
+// pub struct ZkProofRP {
+//     pub chunks: Vec<ZkProofRPwR>,
+//     pub e: BigInt,
+// }
 
-impl ZkProofRP {
-    pub fn generate(chunks: Vec<ZkProofRPwR>, t: u32) -> Self {
-        let mut hasher = Sha256::new();
-        for chunk in &chunks {
-            let (c, d, cd) = chunk.commit();
-            hasher.update(c.to_string().as_bytes());
-            hasher.update(d.to_string().as_bytes());
-            hasher.update(cd.to_string().as_bytes());
-        }
-        let hash = hasher.finalize();
-        let e = BigInt::from_bytes(&hash) % BigInt::from(2).pow(t);
-        Self { chunks, e }
-    }
+// impl ZkProofRP {
+//     pub fn generate(chunks: Vec<ZkProofRPwR>, t: u32) -> Self {
+//         let mut hasher = Sha256::new();
+//         for chunk in &chunks {
+//             let (c, d, cd) = chunk.commit();
+//             hasher.update(c.to_string().as_bytes());
+//             hasher.update(d.to_string().as_bytes());
+//             hasher.update(cd.to_string().as_bytes());
+//         }
+//         let hash = hasher.finalize();
+//         let e = BigInt::from_bytes(&hash) % BigInt::from(2).pow(t);
+//         Self { chunks, e }
+//     }
 
-    pub fn responses(&self) -> Vec<(BigInt, BigInt, BigInt)> {
-        self.chunks.iter().map(|c| c.response(&self.e)).collect()
-    }
-}
+//     pub fn responses(&self) -> Vec<(BigInt, BigInt, BigInt)> {
+//         self.chunks.iter().map(|c| c.response(&self.e)).collect()
+//     }
+// }

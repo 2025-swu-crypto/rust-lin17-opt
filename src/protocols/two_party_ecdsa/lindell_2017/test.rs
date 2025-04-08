@@ -2,17 +2,17 @@
 
 use std::hash::BuildHasherDefault;
 use curv::arithmetic::{One, Zero};
+use sha2::digest::consts::U32;
 
 use crate::protocols::two_party_ecdsa::lindell_2017::{party_one, party_two};
 use crate::utilities::zk_pdl::ZkPdlError;
 use curv::arithmetic::traits::Samplable;
 use curv::arithmetic::{BasicOps, Integer, Modulo, Converter};
 use curv::elliptic::curves::{secp256_k1::Secp256k1, Scalar};
-use crate::protocols::two_party_ecdsa::lindell_2017::{zkp_qr, zkp_qrdl, zkp_rpwr}; // jah
-// 
+
 use curv::BigInt;
 use sha2::{Sha256, Digest};
-use paillier::{Paillier, KeyGeneration, EncryptionKey, DecryptionKey};
+use paillier::{DecryptionKey, EncryptWithChosenRandomness, EncryptionKey, KeyGeneration, Mul, Paillier};
 
 #[test]
 fn test_d_log_proof_party_two_party_one() {
