@@ -23,3 +23,7 @@ pub mod range_proofs; // jah
 #[cfg(test)]
 mod test;
 // mod range_proofs;
+pub mod zkp_qr;
+pub mod zkp_qrdl;
+pub mod zkp_range_proof;
+pub mod zkp_affran;
