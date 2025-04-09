@@ -110,7 +110,16 @@ pub fn zkp_range_proof_prover(
     ProofRPwR {capital_c, d, capital_d, z1, z2, z3}
 }
 
-pub fn zkp_range_proof_verifier(proof_rpwr: &ProofRPwR, n0: &BigInt, n: &BigInt, nn: &BigInt, q: &BigInt, h: &BigInt, g: &BigInt, c: &BigInt, ) -> bool {
+pub fn zkp_range_proof_verifier(
+    proof_rpwr: &ProofRPwR, 
+    n0: &BigInt, 
+    n: &BigInt, 
+    nn: &BigInt, 
+    q: &BigInt, 
+    h: &BigInt, 
+    g: &BigInt, 
+    c: &BigInt, 
+) -> bool {
     // receiving proofs from prover
     let ProofRPwR {capital_c, d, capital_d, z1, z2, z3,} = proof_rpwr;
     

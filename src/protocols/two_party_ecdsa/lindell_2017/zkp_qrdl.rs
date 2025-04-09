@@ -50,7 +50,7 @@ pub fn zkp_qrdl_prover(n0: &BigInt, h: &BigInt, g: &BigInt, alpha: &BigInt, ) ->
     ProofQRdl {a, z}
 }
 
-pub fn zkp_qrdl_verifier(proof_qrdl: &ProofQRdl, n0: &BigInt, g: &BigInt, h: &BigInt, ) -> bool {
+pub fn zkp_qrdl_verifier(proof_qrdl: &ProofQRdl, n0: &BigInt, h: &BigInt, g: &BigInt, ) -> bool {
     let ProofQRdl {a, z} = proof_qrdl;
 
     let mut hasher = Sha256::new();
@@ -81,6 +81,6 @@ pub fn test_zkp_qrdl() {
     let n0 = verifier_setup();
     let (h, g, alpha) = prover_setup(&n0);
     let proof_qrdl = zkp_qrdl_prover(&n0, &h, &g, &alpha);
-    let verified_qrdl = zkp_qrdl_verifier(&proof_qrdl, &n0, &g, &h);
+    let verified_qrdl = zkp_qrdl_verifier(&proof_qrdl, &n0, &h, &g);
     assert!(verified_qrdl, "ZKPoKQRdl verification failed!")
 }

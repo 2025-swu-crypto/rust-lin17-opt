@@ -25,7 +25,7 @@ pub fn prover_setup(n0: &BigInt, )  -> (BigInt, BigInt) {
     (x, h)
 }
 
-pub fn zkp_qr_prover(n0: &BigInt, h: &BigInt, x: &BigInt, ) -> ProofQR {
+pub fn zkp_qr_prover(n0: &BigInt, x: &BigInt, h: &BigInt, ) -> ProofQR {
     let r: BigInt = BigInt::sample_below(&n0);
     let a = BigInt::mod_pow(&r, &BigInt::from(2), n0);
 
@@ -80,7 +80,7 @@ pub fn zkp_qr_verifier(proof_qr: &ProofQR, n0: &BigInt, h:&BigInt, ) -> bool {
 pub fn test_zkp_qr() {
     let n0 = verifier_setup();
     let (x, h) = prover_setup(&n0);
-    let proof_qr = zkp_qr_prover(&n0, &h, &x);
+    let proof_qr = zkp_qr_prover(&n0, &x, &h);
     let verified_qr = zkp_qr_verifier(&proof_qr, &n0, &h);
     assert!(verified_qr, "ZKPoKQR verification failed!")
 }

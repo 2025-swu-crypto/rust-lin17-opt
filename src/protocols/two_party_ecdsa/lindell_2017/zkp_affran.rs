@@ -44,7 +44,7 @@ pub fn prover_verify_h_g(n0: &BigInt, h: &BigInt, g: &BigInt, proof_qr: &ProofQR
     // Prover verifies Verifiers h, g
     let verif_qr = zkp_qr_verifier(&proof_qr, &n0, &h);
     assert_eq!(verif_qr, true);
-    let verif_qrdl = zkp_qrdl_verifier(&proof_qrdl, &n0, &g, &h);
+    let verif_qrdl = zkp_qrdl_verifier(&proof_qrdl, &n0, &h, &g);
     assert_eq!(verif_qrdl, true);
 
     verif_qr && verif_qrdl
