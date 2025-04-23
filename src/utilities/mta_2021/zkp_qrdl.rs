@@ -2,25 +2,29 @@ use curv::BigInt;
 use curv::arithmetic::traits::Samplable;
 use curv::arithmetic::{BasicOps, Modulo};
 use sha2::{Sha256, Digest};
-use paillier::{KeyGeneration, Paillier};
+// use paillier::{KeyGeneration, Paillier};
+use crate::utilities::mta_2021::zkp_p::PiPProver;
 
 pub const S: u32 = 128;
 
-pub struct ProofQRdl {
-    a: BigInt,
-    z: BigInt,
+pub struct QRdlProof {
+    pub a: BigInt,
+    pub z: BigInt,
 }
 
-// input n0, h, g, alpha, proof_qrdl, 
+// Quadratic Residue discrete log proof
+// input n0, h, g, alpha, zkp_qrdl, 
 
-pub fn verifier_setup() -> BigInt {
-    let (ek0, _) = Paillier::keypair_with_modulus_size(3072).keys();
-    let n0 = ek0.n.clone();
+pub fn qrdl_verifier_setup() -> BigInt {
+    let keypair = PiPProver::generate_paillier_blum_primes(3072);
+    let n0 = keypair.n.clone();
+    // let (ek0, _) = Paillier::keypair_with_modulus_size(3072).keys();
+    // let n0 = ek0.n.clone();
 
     n0
 }
 
-pub fn prover_setup(n0: &BigInt, ) -> (BigInt, BigInt, BigInt) {    
+pub fn qrdl_prover_setup(n0: &BigInt, ) -> (BigInt, BigInt, BigInt, ) {    
     let x = BigInt::sample_below(&n0);
     let h = BigInt::mod_pow(&x, &BigInt::from(2), &n0);
 
@@ -30,7 +34,7 @@ pub fn prover_setup(n0: &BigInt, ) -> (BigInt, BigInt, BigInt) {
     (h, g, alpha)
 }
 
-pub fn zkp_qrdl_prover(n0: &BigInt, h: &BigInt, g: &BigInt, alpha: &BigInt, ) -> ProofQRdl {
+pub fn generate_zkp_qrdl(n0: &BigInt, h: &BigInt, g: &BigInt, alpha: &BigInt, ) -> QRdlProof {
     let beta = BigInt::sample_range(&BigInt::from(1), &(BigInt::from(2).pow(S-1) * n0)) * 2;
     let a = BigInt::mod_pow(&h, &beta, &n0); // h^beta
 
@@ -47,11 +51,12 @@ pub fn zkp_qrdl_prover(n0: &BigInt, h: &BigInt, g: &BigInt, alpha: &BigInt, ) ->
 
     let z = e.clone() * alpha + beta; // e * alpha + beta (integer)
 
-    ProofQRdl {a, z}
+    QRdlProof {a, z}
 }
 
-pub fn zkp_qrdl_verifier(proof_qrdl: &ProofQRdl, n0: &BigInt, h: &BigInt, g: &BigInt, ) -> bool {
-    let ProofQRdl {a, z} = proof_qrdl;
+pub fn verify_zkp_qrdl(zkp_qrdl: &QRdlProof, n0: &BigInt, h: &BigInt, g: &BigInt, ) -> bool {
+    // let QRdlProof {a, z} = zkp_qrdl;
+    let &QRdlProof {ref a, ref z} = zkp_qrdl;
 
     let mut hasher = Sha256::new();
     hasher.update(a.to_string().as_bytes());
@@ -64,10 +69,10 @@ pub fn zkp_qrdl_verifier(proof_qrdl: &ProofQRdl, n0: &BigInt, h: &BigInt, g: &Bi
         BigInt::from(0)
     };
 
-    let lhs = BigInt::mod_pow(&h, &proof_qrdl.z, &n0);
+    let lhs = BigInt::mod_pow(&h, &z, &n0);
     let rhs = BigInt::mod_mul(
         &(BigInt::mod_pow(&g, &e, &n0)),
-        &proof_qrdl.a,
+        &a,
         &n0,
     );
 
@@ -78,9 +83,9 @@ pub fn zkp_qrdl_verifier(proof_qrdl: &ProofQRdl, n0: &BigInt, h: &BigInt, g: &Bi
 
 #[test]
 pub fn test_zkp_qrdl() {
-    let n0 = verifier_setup();
-    let (h, g, alpha) = prover_setup(&n0);
-    let proof_qrdl = zkp_qrdl_prover(&n0, &h, &g, &alpha);
-    let verified_qrdl = zkp_qrdl_verifier(&proof_qrdl, &n0, &h, &g);
+    let n0 = qrdl_verifier_setup();
+    let (h, g, alpha) = qrdl_prover_setup(&n0);
+    let zkp_qrdl = generate_zkp_qrdl(&n0, &h, &g, &alpha);
+    let verified_qrdl = verify_zkp_qrdl(&zkp_qrdl, &n0, &h, &g);
     assert!(verified_qrdl, "ZKPoKQRdl verification failed!")
 }

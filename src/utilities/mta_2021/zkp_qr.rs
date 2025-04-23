@@ -2,32 +2,36 @@ use curv::BigInt;
 use curv::arithmetic::traits::Samplable;
 use curv::arithmetic::Modulo;
 use sha2::{Sha256, Digest};
-use paillier::{KeyGeneration, Paillier};
+// use paillier::{KeyGeneration, Paillier};
+use crate::utilities::mta_2021::zkp_p::PiPProver;
 
-pub struct ProofQR {
-    a: BigInt,
-    z: BigInt,
+pub struct QRProof {
+    pub a: BigInt,
+    pub z: BigInt,
 }
 
+// Qudratic Residue proof 
 // input n0, x, h
 
-pub fn verifier_setup() -> BigInt {
-    let (ek0, _) = Paillier::keypair_with_modulus_size(3072).keys();
-    let n0 = ek0.n.clone();
+pub fn qr_verifier_setup() -> BigInt {
+    let keypair = PiPProver::generate_paillier_blum_primes(3072);
+    let n0 = keypair.n.clone();
+    // let (ek0, _) = Paillier::keypair_with_modulus_size(3072).keys();
+    // let n0 = ek0.n.clone();
 
     n0
 }
 
-pub fn prover_setup(n0: &BigInt, )  -> (BigInt, BigInt) {
+pub fn qr_prover_setup(n0: &BigInt, )  -> (BigInt, BigInt) {
     let x: BigInt = BigInt::sample_below(&n0);
     let h = BigInt::mod_pow(&x, &BigInt::from(2), &n0);
 
     (x, h)
 }
 
-pub fn zkp_qr_prover(n0: &BigInt, x: &BigInt, h: &BigInt, ) -> ProofQR {
+pub fn generate_zkp_qr(n0: &BigInt, x: &BigInt, h: &BigInt, ) -> QRProof {
     let r: BigInt = BigInt::sample_below(&n0);
-    let a = BigInt::mod_pow(&r, &BigInt::from(2), n0);
+    let a: BigInt = BigInt::mod_pow(&r, &BigInt::from(2), n0);
 
     let mut hasher = Sha256::default();
     hasher.update(&a.to_string().as_bytes());
@@ -46,14 +50,15 @@ pub fn zkp_qr_prover(n0: &BigInt, x: &BigInt, h: &BigInt, ) -> ProofQR {
         &n0
     );
 
-    ProofQR {a, z}
+    QRProof {a, z}
 }
 
-pub fn zkp_qr_verifier(proof_qr: &ProofQR, n0: &BigInt, h:&BigInt, ) -> bool {
-    let ProofQR {a, z} = proof_qr; // a, z
+pub fn verify_zkp_qr(zkp_qr: &QRProof, n0: &BigInt, h:&BigInt, ) -> bool {
+    // let QRProof {a, z} = zkp_qr; // a, z
+    let &QRProof {ref a, ref z} = zkp_qr;
 
     let mut hasher = Sha256::default();
-    hasher.update(&proof_qr.a.to_string().as_bytes());
+    hasher.update(a.to_string().as_bytes());
     hasher.update(&h.to_string().as_bytes()); 
     let result = hasher.finalize();
     let last_byte = result[result.len() - 1];
@@ -63,10 +68,10 @@ pub fn zkp_qr_verifier(proof_qr: &ProofQR, n0: &BigInt, h:&BigInt, ) -> bool {
         BigInt::from(0)
     }; //e
 
-    let lhs = BigInt::mod_pow(&proof_qr.z, &BigInt::from(2), &n0); // z^2
+    let lhs = BigInt::mod_pow(&z, &BigInt::from(2), &n0); // z^2
     let rhs = BigInt::mod_mul( // h^e * a 
         &(BigInt::mod_pow(&h, &e, &n0)),
-        &proof_qr.a,
+        &a,
         &n0,
     );
 
@@ -78,9 +83,9 @@ pub fn zkp_qr_verifier(proof_qr: &ProofQR, n0: &BigInt, h:&BigInt, ) -> bool {
 
 #[test]
 pub fn test_zkp_qr() {
-    let n0 = verifier_setup();
-    let (x, h) = prover_setup(&n0);
-    let proof_qr = zkp_qr_prover(&n0, &x, &h);
-    let verified_qr = zkp_qr_verifier(&proof_qr, &n0, &h);
+    let n0 = qr_verifier_setup();
+    let (x, h) = qr_prover_setup(&n0);
+    let zkp_qr = generate_zkp_qr(&n0, &x, &h);
+    let verified_qr = verify_zkp_qr(&zkp_qr, &n0, &h);
     assert!(verified_qr, "ZKPoKQR verification failed!")
 }

@@ -5,6 +5,7 @@ mod bench {
     use curv::cryptographic_primitives::secret_sharing::feldman_vss::VerifiableSS;
     use curv::elliptic::curves::{secp256_k1::Secp256k1, Point, Scalar};
     use multi_party_ecdsa::protocols::multi_party_ecdsa::gg_2018::party_i::*;
+    use sha2::Sha256;
     pub fn bench_full_keygen_party_one_two(c: &mut Criterion) {
         c.bench_function("keygen t=1 n=2", move |b| {
             b.iter(|| {
@@ -27,7 +28,7 @@ mod bench {
         Vec<SharedKeys>,
         Vec<Point<Secp256k1>>,
         Point<Secp256k1>,
-        VerifiableSS<Secp256k1>,
+        VerifiableSS<Secp256k1, Sha256>,
     ) {
         let parames = Parameters {
             threshold: t,

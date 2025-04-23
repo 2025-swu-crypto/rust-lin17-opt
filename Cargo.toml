@@ -30,21 +30,22 @@ default = ["curv-kzen/rust-gmp-kzen"]
 cclst = ["class_group"]
 
 [dependencies]
+curv-kzen = { path="../rust-curv" }
 subtle = { version = "2" }
 serde = { version = "1.0", features = ["derive"] }
 zeroize = "1"
-curv-kzen = { version = "0.9", default-features = false }
-centipede = { version = "0.3", default-features = false }
-zk-paillier = { version = "0.4.3", default-features = false }
+centipede = { version = "0.3.1", default-features = false }
+zk-paillier = { version = "0.4.4", default-features = false }
 round-based = { version = "0.1.4", features = [] }
 thiserror = "1.0.23"
 derivative = "2"
 sha2 = "0.9"
 num-bigint = "0.4"
 num-traits = "0.2"
+reqwest = { version = "0.9", default-features = false }
 
 [dependencies.paillier]
-version = "0.4.2"
+version = "0.4.3"
 package = "kzen-paillier"
 default-features = false
 
@@ -60,7 +61,6 @@ hex = "0.4"
 tokio = { version = "1", default-features = false, features = ["macros"] }
 futures = "0.3"
 rocket = { version = "0.5.0-rc.1", default-features = false, features = ["json"] }
-reqwest = { version = "0.9", default-features = false }
 uuid = { version = "0.8", features = ["v4"] }
 serde_json = "1.0"
 rand = "0.8"
@@ -72,6 +72,10 @@ secp256k1 = { version = "0.20", features = ["global-context"]}
 
 thiserror = "1.0.23"
 round-based = { version = "0.1.4", features = ["dev"] }
+
+[patch.crates-io]
+rust-gmp-kzen = { path = "../rust-gmp-kzen" }
+curv-kzen = { path = "../rust-curv" }
 
 [[example]]
 name = "gg18_sm_manager"
@@ -98,7 +102,6 @@ path = "benches/two_party_ecdsa/cclst_2019/sign.rs"
 required-features = ["cclst"]
 harness = false
 
-
 [[bench]]
 name = "gg18"
 path = "benches/multi_party_ecdsa/gg18/keygen.rs"
@@ -108,7 +111,6 @@ harness = false
 name = "lindel2017_keygen"
 path = "benches/two_party_ecdsa/lindell_2017/keygen.rs"
 harness = false
-
 
 [[bench]]
 name = "lindel2017_sign"
