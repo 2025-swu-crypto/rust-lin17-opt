@@ -367,8 +367,8 @@ fn test_two_party_sign_with_JL() {
 fn test_jl_repeat() {
 
     // timer
-    let mut f = OpenOptions::new().append(true).open("lin17_JL").expect("cannot open file");
-    let mut f2 = OpenOptions::new().append(true).open("result/lin17_JL.csv").expect("cannot open file");
+    let mut f = OpenOptions::new().append(true).open("result/lin17_JL").expect("cannot open file");
+    let mut f2 = OpenOptions::new().append(true).open("result/lin17_JL_0325.csv").expect("cannot open file");
     // f.write_all(format!("{:?}\n", Instant::now()).as_bytes()).expect("write failed");
 
 
@@ -393,7 +393,7 @@ fn test_jl_repeat() {
     let keypair = JoyeLibertKeyPair::generate_keypair_and_encrypted_share(&ec_key_pair_party1);
 
 
-    for _ in 0..500 {
+    for _ in 0..1000 {
         // f2.write_all(format!("s: {:?}", keypair..dt.s))
         println!("com1 {:?}", _party_one_private_share_gen.pk_commitment.bit_length());
         // println!("pf k_1 {:?}", mem::size_of_val(&_comm_witness.d_log_proof));
@@ -696,8 +696,8 @@ fn test_two_party_sign_with_opt() {
 fn test_opt_repeat() {
 
     // timer
-    let mut f = OpenOptions::new().append(true).open("lin17_JL").expect("cannot open file");
-    let mut f2 = OpenOptions::new().append(true).open("result/lin17_opt_str.csv").expect("cannot open file");
+    let mut f = OpenOptions::new().append(true).open("result/lin17_JL").expect("cannot open file");
+    let mut f2 = OpenOptions::new().append(true).open("result/lin17_JL_opt_0325.csv").expect("cannot open file");
     // f.write_all(format!("{:?}\n", Instant::now()).as_bytes()).expect("write failed");
 
 

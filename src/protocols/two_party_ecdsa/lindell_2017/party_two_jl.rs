@@ -410,7 +410,7 @@ impl PartialSig {
         ephemeral_other_public_share: &Point<Secp256k1>,
         message: &BigInt,
     ) -> PartialSig {
-        let mut f = OpenOptions::new().append(true).open("exp_data").expect("cannot open file");
+        let mut f = OpenOptions::new().append(true).open("result/exp_data").expect("cannot open file");
 
         let q = Scalar::<Secp256k1>::group_order();
         //compute r = k2* R1
@@ -464,7 +464,7 @@ impl PartialSig {
         ephemeral_local_share: &EphEcKeyPair,
         ephemeral_other_public_share: &Point<Secp256k1>,
     ) -> OptimizedPartialSig {
-        let mut f = OpenOptions::new().append(true).open("exp_data").expect("cannot open file");
+        let mut f = OpenOptions::new().append(true).open("result/exp_data").expect("cannot open file");
 
         let q = Scalar::<Secp256k1>::group_order();
         //compute r = k2* R1

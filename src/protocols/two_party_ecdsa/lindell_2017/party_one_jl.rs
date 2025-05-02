@@ -418,7 +418,7 @@ impl JoyeLibertKeyPair {
         let mut dt = DecryptionTable::default();
         // info!("dt size {:?}", );
         // JoyeLibert::precom_table_with_size(&dk, &encrypted_share_, &mut dt, 17);
-        JoyeLibert::precom_table_with_str(&dk, &encrypted_share_, &mut dt, 17);
+        JoyeLibert::precom_table_with_str(&dk, &encrypted_share_, &mut dt, 13);
 
         JoyeLibertKeyPair {
             ek,
@@ -581,7 +581,7 @@ impl PartialSig {
         println!(">>>>>>p1 sig start: {:?}", sigcom_start);
         
         let start_time1 = Instant::now();
-        let s_tag = JoyeLibert::decrypt2(
+        let s_tag = JoyeLibert::decrypt_with_str(
             &party_one_private.joyelivert_priv,
             &RawCiphertext::from(partial_sig_c3),
             &party_one_private.joyelivert_dt,
@@ -643,7 +643,7 @@ impl Signature {
         // )
         // .0;
 
-        let s_tag = JoyeLibert::decrypt2(
+        let s_tag = JoyeLibert::decrypt_with_str(
             &party_one_private.joyelivert_priv,
             &RawCiphertext::from(partial_sig_c3),
             &party_one_private.joyelivert_dt,
