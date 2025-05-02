@@ -30,6 +30,7 @@ default = ["curv-kzen/rust-gmp-kzen"]
 cclst = ["class_group"]
 
 [dependencies]
+rust-gmp = { path = "../rust-gmp" }
 curv-kzen = { path="../rust-curv" }
 subtle = { version = "2" }
 serde = { version = "1.0", features = ["derive"] }
@@ -117,15 +118,3 @@ harness = false
 name = "lindel2017_sign"
 path = "benches/two_party_ecdsa/lindell_2017/sign.rs"
 harness = false
-
-[[bin]]  # 실행 가능한 바이너리
-name = "gg18_sm_manager"
-path = "examples/gg18_sm_manager.rs"
-
-[[bin]]
-name = "gg18_keygen_client"
-path = "examples/gg18_keygen_client.rs"
-
-[env]
-ROCKET_ADDRESS = "127.0.0.1"
-ROCKET_PORT = "8080"

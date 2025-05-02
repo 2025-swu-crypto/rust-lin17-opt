@@ -5,12 +5,13 @@ use curv::arithmetic::One;
 use paillier::PrimeSampable;
 use sha2::{Sha256, Digest};
 
-use crate::utilities::mta_2021::PartyTwo;
+// use crate::utilities::mta_2021::PartyTwo;
 
 pub const L: usize = 5;
 
 // common input = n
 // prover has secret input (p, q) s.t. n = pq
+#[derive(Clone, Debug)] 
 pub struct PiPProver {
     pub n: BigInt,
     p: BigInt,
@@ -48,6 +49,9 @@ pub fn generate_yi_vec(n: &BigInt, w: &BigInt) -> Vec<BigInt> {
 }
 
 impl PiPProver {
+    pub fn new(n: BigInt, p: BigInt, q: BigInt,) -> PiPProver {
+        PiPProver { n, p, q }
+    }
 
     pub fn get_p(&self) -> &BigInt {
         &self.p
@@ -300,7 +304,7 @@ pub fn verify_pip_proof(
 
 #[test]
 pub fn test_pip_proof() {
-    let p2 = PartyTwo::new();
+    // let p2 = PartyTwo::new();
     let prover_pip = PiPProver::generate_paillier_blum_primes(3072); // p, q, n
     let n = &prover_pip.n;
     let PiPProof {w, x_vec, a_vec, b_vec, z_vec} = prover_pip.generate_pip_proof();

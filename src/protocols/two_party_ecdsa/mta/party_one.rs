@@ -39,6 +39,7 @@ use super::party_two::EphKeyGenSecondMsg as Party2EphKeyGenSecondMessage;
 use super::SECURITY_BITS;
 
 use crate::utilities::mta::MessageB;
+use crate::utilities::mta_2021::{zkp_p, zkp_qr, zkp_qrdl, zkp_range_proof};
 use crate::Error;
 
 use crate::utilities::zk_pdl_with_slack::PDLwSlackProof;
@@ -46,13 +47,34 @@ use crate::utilities::zk_pdl_with_slack::PDLwSlackStatement;
 use crate::utilities::zk_pdl_with_slack::PDLwSlackWitness;
 use zk_paillier::zkproofs::{CompositeDLogProof, DLogStatement};
 
-//****************** Begin: Party One structs ******************//
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct EcKeyPair {
+// ****************** Begin: Party One structs ******************//
+#[derive(Clone, Debug, Serialize, Deserialize)] 
+pub struct EcKeyPair { // 이걸로 paillier key gen 돌아감 
     pub public_share: Point<Secp256k1>,
     secret_share: Scalar<Secp256k1>,
 }
 
+//MtA에서 g, h가 그냥 임의로 뽑은 값이었나? 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct KeyGen {
+    
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PaillierKeyPair {
+    pub ek: EncryptionKey,
+    dk: DecryptionKey,
+    pub encrypted_share: BigInt,
+    randomness: BigInt,
+}
+
+pub struct MtAPublicParameter {
+    pub g: BigInt,
+    pub h: BigInt,
+}
+
+
+// ====== not using structures below 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CommWitness {
     pub pk_commitment_blind_factor: BigInt,
@@ -72,13 +94,6 @@ pub struct KeyGenSecondMsg {
     pub comm_witness: CommWitness,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PaillierKeyPair {
-    pub ek: EncryptionKey,
-    dk: DecryptionKey,
-    pub encrypted_share: BigInt,
-    randomness: BigInt,
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SignatureRecid {
@@ -317,7 +332,7 @@ impl Party1Private {
 
 impl PaillierKeyPair {
     pub fn generate_keypair_and_encrypted_share(keygen: &EcKeyPair) -> PaillierKeyPair {
-        let (ek, dk) = Paillier::generate_paillier_blum_primes().keys(); //keypair().keys();
+        let (ek, dk) = Paillier::keypair_blum_with_modulus_size(2048).keys(); //keypair().keys();
         let randomness = Randomness::sample(&ek);
 
         let encrypted_share = Paillier::encrypt_with_chosen_randomness(
@@ -361,6 +376,14 @@ impl PaillierKeyPair {
 
     pub fn generate_ni_proof_correct_key(paillier_context: &PaillierKeyPair) -> NiCorrectKeyProof {
         NiCorrectKeyProof::proof(&paillier_context.dk, None)
+    }
+
+    pub fn generate_pip_proof(&self) -> zkp_p::PiPProof {
+        let n = self.ek.n.clone();
+        let p = self.dk.p.clone();
+        let q = self.dk.q.clone();
+        let prover = zkp_p::PiPProver::new(n, p, q);
+        prover.generate_pip_proof()
     }
 
     pub fn pdl_proof(

@@ -11,7 +11,7 @@ use paillier::RawPlaintext;
 
 
 use crate::protocols::two_party_ecdsa::lindell_2017::party_one;
-use crate::utilities::mta_2021::zkp_p::*;
+use crate::utilities::mta_2021::zkp_p;
 use crate::utilities::mta_2021::zkp_qr::*;
 use crate::utilities::mta_2021::zkp_qrdl::*;
 use crate::utilities::mta_2021::zkp_range_proof::*;
@@ -24,50 +24,50 @@ pub trait Party {
 }
 
 
-impl<T> Party for T{
-    fn setup() -> (BigInt, zkp_p::PiPProof, zkp_qr::QRProof, zkp_qrdl::QRdlProof) {
-        let prover = PiPProver::generate_paillier_blum_primes(3072);
-        let n = prover.n.clone();
-        // let n0 = verifier.n.clone();
-        let phi_n = (prover.get_p().clone() - BigInt::one()) * (prover.get_q().clone() - BigInt::one()); // sk = phi_n
-        let PiPProof{w, x_vec, a_vec, b_vec, z_vec} = prover.generate_pip_proof();
-        let (x, h) = qr_prover_setup(&n); // qr_statement = (x, n)
-        let QRProof {a, z} = generate_zkp_qr(&n, &x, &h);
-        let (h, g, alpha) = qrdl_prover_setup(&n);
-        let QRdlProof {a, z} = generate_zkp_qrdl(&n, &h, &g, &alpha);
+// impl<T> Party for T{
+//     fn setup() -> (BigInt, zkp_p::PiPProof, zkp_qr::QRProof, zkp_qrdl::QRdlProof) {
+//         let prover = PiPProver::generate_paillier_blum_primes(3072);
+//         let n = prover.n.clone();
+//         // let n0 = verifier.n.clone();
+//         let phi_n = (prover.get_p().clone() - BigInt::one()) * (prover.get_q().clone() - BigInt::one()); // sk = phi_n
+//         let PiPProof{w, x_vec, a_vec, b_vec, z_vec} = prover.generate_pip_proof();
+//         let (x, h) = qr_prover_setup(&n); // qr_statement = (x, n)
+//         let QRProof {a, z} = generate_zkp_qr(&n, &x, &h);
+//         let (h, g, alpha) = qrdl_prover_setup(&n);
+//         let QRdlProof {a, z} = generate_zkp_qrdl(&n, &h, &g, &alpha);
 
-        (n, PiPProof {w, x_vec, a_vec, b_vec, z_vec}, QRProof {a: a.clone(), z: z.clone()}, QRdlProof {a, z})
-    }
-}
+//         (n, PiPProof {w, x_vec, a_vec, b_vec, z_vec}, QRProof {a: a.clone(), z: z.clone()}, QRdlProof {a, z})
+//     }
+// }
 
-pub struct PartyOne {
-    n0: BigInt, 
-    pip_proof: PiPProof,
-    qr_proof: QRProof,
-    qrdl_proof: QRdlProof, 
-}
-pub struct PartyTwo {
-    n: BigInt, 
-    pip_proof: PiPProof,
-    qr_proof: QRProof,
-    qrdl_proof: QRdlProof, 
-}
+// pub struct PartyOne {
+//     n0: BigInt, 
+//     pip_proof: PiPProof,
+//     qr_proof: QRProof,
+//     qrdl_proof: QRdlProof, 
+// }
+// pub struct PartyTwo {
+//     n: BigInt, 
+//     pip_proof: PiPProof,
+//     qr_proof: QRProof,
+//     qrdl_proof: QRdlProof, 
+// }
 
-impl PartyOne {
-    pub fn new() -> Self {
-        let (n0, pip_proof, qr_proof, qrdl_proof) = PartyOne::setup();
-        PartyOne { n0, pip_proof, qr_proof, qrdl_proof }
-    }
-}
+// impl PartyOne {
+//     pub fn new() -> Self {
+//         let (n0, pip_proof, qr_proof, qrdl_proof) = PartyOne::setup();
+//         PartyOne { n0, pip_proof, qr_proof, qrdl_proof }
+//     }
+// }
 
-impl PartyTwo {
-    pub fn new() -> Self {
-        let (n, pip_proof, qr_proof, qrdl_proof) = PartyTwo::setup();
-        PartyTwo { n, pip_proof, qr_proof, qrdl_proof }
-    }
+// impl PartyTwo {
+//     pub fn new() -> Self {
+//         let (n, pip_proof, qr_proof, qrdl_proof) = PartyTwo::setup();
+//         PartyTwo { n, pip_proof, qr_proof, qrdl_proof }
+//     }
 
     
-}
+// }
 
 
 // pub fn party_two_setup() -> (BigInt, zkp_p::PiPProof, zkp_qr::QRProof, zkp_qrdl::QRdlProof) {
