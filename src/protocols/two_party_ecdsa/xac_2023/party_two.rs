@@ -143,8 +143,6 @@ impl KeyGenFirstMsg {
         let secret_share = Scalar::<Secp256k1>::random();
         let public_share = base * &secret_share;
         let d_log_proof = DLogProof::prove(&secret_share);
-
-
         let ec_key_pair = EcKeyPair {
             public_share: public_share.clone(),
             secret_share,

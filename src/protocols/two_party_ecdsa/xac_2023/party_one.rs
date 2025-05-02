@@ -24,6 +24,8 @@ use curv::cryptographic_primitives::hashing::{Digest, DigestExt};
 use curv::cryptographic_primitives::proofs::sigma_dlog::*;
 use curv::cryptographic_primitives::proofs::sigma_ec_ddh::*;
 use curv::cryptographic_primitives::proofs::ProofError;
+use curv::elliptic::curves::secp256_k1::{Secp256k1Point, Secp256k1Scalar};
+use curv::elliptic::curves::{ECPoint, ECScalar};
 use curv::elliptic::curves::{secp256_k1::Secp256k1, Point, Scalar};
 use curv::BigInt;
 use paillier::Paillier;
@@ -135,6 +137,39 @@ pub struct EphKeyGenSecondMsg {}
 //****************** End: Party One structs ******************//
 
 impl KeyGenFirstMsg {
+    pub fn create() -> (KeyGenFirstMsg, EcKeyPair) {
+        let base = Point::generator();
+
+        let secret_share = Scalar::<Secp256k1>::random(); //x1
+
+        let x1 = base * &secret_share; //Q1 = x1 * P
+
+        let d_log_proof = DLogProof::<Secp256k1, Sha256>::prove(&secret_share); //nizk1
+        
+        // we use hash based commitment
+        let pk_commitment_blind_factor = BigInt::sample(SECURITY_BITS);
+        let pk_commitment =
+            HashCommitment::<Sha256>::create_commitment_with_user_defined_randomness(
+                &BigInt::from_bytes(x1.to_bytes(true).as_ref()),
+                &pk_commitment_blind_factor,
+            );
+
+        let zk_pok_blind_factor = BigInt::sample(SECURITY_BITS);
+        let zk_pok_commitment =
+            HashCommitment::<Sha256>::create_commitment_with_user_defined_randomness(
+                &BigInt::from_bytes(d_log_proof.pk_t_rand_commitment.to_bytes(true).as_ref()),
+                &zk_pok_blind_factor,
+            );
+        let ec_key_pair = EcKeyPair {
+            public_share: x1,
+            secret_share,
+        };
+        (
+            KeyGenFirstMsg { pk_commitment, zk_pok_commitment },
+            ec_key_pair,
+        )
+    }
+
     pub fn create_commitments() -> (KeyGenFirstMsg, CommWitness, EcKeyPair) {
         let base = Point::generator();
 
@@ -143,7 +178,6 @@ impl KeyGenFirstMsg {
         let public_share = base * &secret_share; //Q1 = x1 * P
 
         let d_log_proof = DLogProof::<Secp256k1, Sha256>::prove(&secret_share); //nizk1
-        
         // we use hash based commitment
         let pk_commitment_blind_factor = BigInt::sample(SECURITY_BITS);
         let pk_commitment =
@@ -316,11 +350,15 @@ impl Party1Private {
     }
 }
 
+
+// TODO:curv부분 제네릭 써서 커 각각 다 먹히게 수정해야하는데 이거 왜이러냐 
 impl PaillierKeyPair {
     pub fn generate_keypair_and_encrypted_share(keygen: &EcKeyPair) -> PaillierKeyPair {
-        let (ek, dk) = Paillier::keypair().keys();
+        let (ek, dk) = Paillier::keypair_blum_with_modulus_size(2048).keys();
+        
+        let q = Secp256k1Scalar::group_order();
         let randomness = Randomness::sample(&ek);
-
+        
         let encrypted_share = Paillier::encrypt_with_chosen_randomness(
             &ek,
             RawPlaintext::from(keygen.secret_share.to_bigint()),
@@ -404,7 +442,11 @@ impl PaillierKeyPair {
 impl EphKeyGenFirstMsg {
     pub fn create() -> (EphKeyGenFirstMsg, EphEcKeyPair) {
         let base = Point::generator();
-        let secret_share = Scalar::<Secp256k1>::random();
+        let x1 = Scalar::<Secp256k1>::random();
+        
+        
+        
+        
         let public_share = &*base * &secret_share;
         let h = Point::<Secp256k1>::base_point2();
 
